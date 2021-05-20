@@ -13,6 +13,9 @@ import 'amfe-flexible'
 // 加载全局样式 建议放到最后 防止样式层级覆盖
 import './styles/index.less'
 
+// 引入全局过滤器相对时间格式化
+import './utils/dayjs'
+
 // 全局注册 vant 中的组件
 Vue.use(Vant)
 
