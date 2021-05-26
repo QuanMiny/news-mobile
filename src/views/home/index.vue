@@ -22,28 +22,64 @@
       >
         <article-list :channel="channel"></article-list>
       </van-tab>
+      <!-- 汉堡按钮定位把列表最后的位置给挡住了，解决办法是添加一个占位元素 -->
+      <!-- nav-right可以有多个 -->
+      <div slot="nav-right" class="wap-nav-placeholder"></div>
+      <div
+        slot="nav-right"
+        @click="isChannelEditShow = true"
+        class="wap-nav-wrap"
+      >
+        <van-icon name="wap-nav"></van-icon>
+      </div>
     </van-tabs>
     <!-- /文章频道频道 -->
+    <!-- 频道列表编辑弹出层 -->
+    <!-- 建议挂载到body上 -->
+    <van-popup
+      v-model="isChannelEditShow"
+      closeable
+      close-icon-position="top-left"
+      position="bottom"
+      get-container="body"
+      :style="{ height: '100%' }"
+    >
+      <!-- $event 表示事件参数 -->
+      <channel-edit
+        :user-channels="channels"
+        @close="isChannelEditShow = false"
+        @update-active="active = $event"
+        :active="active"
+      />
+    </van-popup>
+    <!-- /频道列表编辑弹出层 -->
   </div>
 </template>
 
 <script>
 import { getUserChannels } from '@/api/user'
+import { mapState } from 'vuex'
+import { getItem } from '@/utils/storage'
 import ArticleList from './components/article-list'
+import ChannelEdit from './components/channel-edit'
 
 export default {
   name: 'HomeIndex',
   components: {
-    ArticleList
+    ArticleList,
+    ChannelEdit
   },
   props: {},
   data() {
     return {
       active: 0,
-      channels: []
+      channels: [],
+      isChannelEditShow: false
     }
   },
-  computed: {},
+  computed: {
+    ...mapState(['user'])
+  },
   watch: {},
   created() {
     this.loadChannels()
@@ -51,8 +87,25 @@ export default {
   mounted() {},
   methods: {
     async loadChannels() {
-      const { data } = await getUserChannels()
-      this.channels = data.data.channels
+      let channels = []
+      if (this.user) {
+        // 已登录，请求获取用户频道列表
+        const { data } = await getUserChannels()
+        channels = data.data.channels
+      } else {
+        // 未登录
+        const localChannels = getItem('user-channels')
+        if (localChannels) {
+          // 使用本地存储的频道列表
+          channels = localChannels
+        } else {
+          // 没有就使用默认推荐的频道列表
+          const { data } = await getUserChannels()
+          channels = data.data.channels
+        }
+      }
+      // 处理数据
+      this.channels = channels
     }
   }
 }
@@ -85,6 +138,31 @@ export default {
       width: 15px;
       height: 3px;
       background: #3296fa;
+    }
+  }
+  .wap-nav-placeholder {
+    width: 32px;
+    flex-shrink: 0;
+    opacity: 1;
+  }
+  .wap-nav-wrap {
+    position: fixed;
+    right: 0;
+    width: 33px;
+    height: 44px;
+    background-color: #fff;
+    opacity: 0.9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    &:before {
+      content: '';
+      width: 1px;
+      height: 29px;
+      background: url('./line.png') no-repeat;
+      background-size: contain;
+      position: absolute;
+      left: 0;
     }
   }
 }
