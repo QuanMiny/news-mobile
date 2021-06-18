@@ -9,6 +9,7 @@
         size="small"
         type="info"
         round
+        to="/search"
         >搜索</van-button
       >
     </van-nav-bar>
